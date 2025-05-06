@@ -1,4 +1,6 @@
-﻿namespace eSkyStudio.Tools.Projection.Models;
+﻿using eSkyStudio.NavigationDatabase.Models;
+
+namespace eSkyStudio.Tools.Projection.Models;
 
 public struct Bounds
 {
