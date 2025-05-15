@@ -9,8 +9,8 @@ public interface IProjection
 {
     public PointF WorldToLocal(Coordinate source);
     public Coordinate LocalToWorld(PointF screenPosition);
-
-    public void SetReferencePoint(Coordinate referencePoint);
-    public void SetScale(double scale);
-    public void SetScreenSize(SizeF screenSize);
+    
+    public Coordinate Center {get; set;}
+    public double Scale {get; set;}
+    public SizeF ScreenSize {get; set;}
 }

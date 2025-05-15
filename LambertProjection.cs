@@ -1,38 +1,47 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
 using eSkyStudio.NavigationDatabase.Models;
+using GeographicLib;
 using GeographicLib.Projections;
 
 namespace eSkyStudio.Tools.Projection;
 
-public class LambertProjection : AbstractProjection
+public class LambertProjection(Coordinate reference, double scale = 0.005) : IProjection
 {
+    private Coordinate _center = reference;
+
+    public Coordinate Center
+    {
+        get => _center;
+        set
+        {
+            _center = value;
+            Update();
+        }
+    }
+
+    public double Scale { get; set; } = scale;
+    
+    public SizeF ScreenSize { get; set; }
+    
     private LambertConformalConic? _projection;
-
-    public LambertProjection() : base()
+    
+    private static readonly IEllipsoid Earth = Ellipsoid.WGS84;
+    
+    protected void Update()
     {
-        _projection = new LambertConformalConic(Earth, RefLatitude, Scale);
-    }
-
-    public LambertProjection(Coordinate reference, double scale = 0.005) : base(reference, scale)
-    {
-        _projection = new LambertConformalConic(Earth, RefLatitude, Scale);
-    }
-
-    protected override void Update()
-    {
-        _projection = new LambertConformalConic(Earth, RefLatitude, Scale);
+        _projection = new LambertConformalConic(Earth, Center.Latitude, Scale);
     }
 
 
-    public override PointF WorldToLocal(Coordinate source)
+    public PointF WorldToLocal(Coordinate source)
     {
         if (_projection == null)
         {
             Debug.WriteLine("LambertProjection: projection is null");
             return PointF.Empty;
         }
-        (double x, double y) = _projection.Forward(RefLongitude, source.Latitude, source.Longitude);
+        (double x, double y) = _projection.Forward(Center.Longitude, source.Latitude, source.Longitude);
         y *= -1.0; //Screen is Y positive;
         PointF local = new PointF((int)x, (int)y);
         PointF halfScreen = new(ScreenSize.Width / 2.0f, ScreenSize.Height / 2.0f);
@@ -41,7 +50,7 @@ public class LambertProjection : AbstractProjection
         return local;
     }
 
-    public override Coordinate LocalToWorld(PointF screenPosition)
+    public Coordinate LocalToWorld(PointF screenPosition)
     {
         if (_projection == null)
         {
@@ -52,7 +61,7 @@ public class LambertProjection : AbstractProjection
         screenPosition.X -= halfScreen.X;
         screenPosition.Y -= halfScreen.Y;
         screenPosition.Y = screenPosition.Y * -1;
-        (double lat, double lon) = _projection.Reverse(RefLongitude, screenPosition.X, screenPosition.Y);
+        (double lat, double lon) = _projection.Reverse(Center.Longitude, screenPosition.X, screenPosition.Y);
         return new Coordinate(lat, lon);
 
     }
